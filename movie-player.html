@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cinematic Stream Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top, #1b1b1b 0%, #000 60%);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    .cinema-wrap {
+      width: 100%;
+      max-width: 1100px;
+      padding: 40px 20px 60px;
+      position: relative;
+      animation: fadeIn 1.2s ease;
+    }
+
+    .title {
+      font-family: 'Cinzel', serif;
+      font-size: 2.6rem;
+      text-align: center;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #f5c77a, #fff, #f5c77a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      text-align: center;
+      opacity: 0.75;
+      margin-bottom: 35px;
+      font-size: 0.95rem;
+    }
+
+    /* Control Panel */
+    .control-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 35px;
+    }
+
+    .control-panel input {
+      flex: 1;
+      min-width: 260px;
+      max-width: 420px;
+      padding: 14px 18px;
+      border-radius: 50px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .control-panel input:focus {
+      border-color: #f5c77a;
+      box-shadow: 0 0 0 2px rgba(245,199,122,0.2);
+    }
+
+    .control-panel button {
+      padding: 14px 26px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #f5c77a, #c08b3e);
+      color: #000;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .control-panel button:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 12px 30px rgba(245,199,122,0.35);
+    }
+
+    /* Player */
+    .player-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.9);
+      margin-bottom: 45px;
+      animation: glow 4s infinite alternate;
+    }
+
+    .player-frame iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Instruction Section */
+    .howto {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 22px;
+      margin-top: 10px;
+    }
+
+    .step {
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+
+    .step:hover { transform: translateY(-6px); }
+
+    .step-number {
+      font-family: 'Cinzel', serif;
+      font-size: 2.2rem;
+      opacity: 0.25;
+      position: absolute;
+      top: 12px;
+      right: 18px;
+    }
+
+    .step h4 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+      color: #f5c77a;
+    }
+
+    .step p {
+      font-size: 0.9rem;
+      opacity: 0.85;
+      line-height: 1.5;
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+      cursor: help;
+      border-bottom: 1px dotted #f5c77a;
+    }
+
+    .tooltip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      width: 240px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+    }
+
+    .tooltip:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-6px);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 30px 70px rgba(245,199,122,0.15); }
+      to { box-shadow: 0 50px 120px rgba(245,199,122,0.35); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cinema-wrap">
+
+    <div class="title">Cinematic Stream</div>
+    <div class="subtitle">
+      Paste IMDb Movie ID and enjoy a <span class="tooltip" data-tip="Dark theme, smooth animations aur cinema-style glow – full immersive feel">theatre‑like experience</span>
+    </div>
+
+    <div class="control-panel">
+      <input id="imdbInput" type="text" placeholder="Paste IMDb URL or tt12345678" />
+      <button onclick="loadMovie()">ENTER & PLAY</button>
+    </div>
+
+    <div class="player-frame">
+      <iframe id="player" src="https://vekna402las.com/play/" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    </div>
+
+    <!-- How To Section -->
+    <div class="howto">
+      <div class="step">
+        <div class="step-number">01</div>
+        <h4>Open IMDb</h4>
+        <p>IMDb website par jao aur apni movie ya series search karo.</p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">02</div>
+        <h4>Copy ID</h4>
+        <p>URL me <strong>title ke baad wali ID</strong> copy karo — example:<br><code>tt30387012</code></p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">03</div>
+        <h4>Paste & Play</h4>
+        <p>ID yaha paste karo, ENTER dabao aur cinema vibe enjoy karo 🍿</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+  function loadMovie() {
+    const input = document.getElementById('imdbInput').value.trim();
+    if (!input) return;
+
+    let id = null;
+
+    // Case 1: Direct tt ID
+    if (/^tt\d+$/i.test(input)) {
+      id = input;
+    }
+
+    // Case 2: URL
+    else if (/^https?:\/\//i.test(input)) {
+      try {
+        const url = new URL(input);
+
+        // imdb.com check
+        if (!url.hostname.includes('imdb.com')) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Invalid URL',
+            text: 'Bhai sirf imdb.com ka URL dalo, usi ki video ID chalti hai 🙂'
+          });
+          return;
+        }
+
+        // tt ID extract
+        const match = url.pathname.match(/tt\d+/);
+        if (match) {
+          id = match[0];
+        } else {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Video ID nahi mili',
+            text: 'Is IMDb URL me movie/series ki tt****** ID nahi hai 😕'
+          });
+          return;
+        }
+      } catch (e) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Invalid URL',
+          text: 'URL sahi se dalo bhai 😬'
+        });
+        return;
+      }
+    }
+
+    // Case 3: Kuch bhi aur
+    else {
+      Swal.fire({
+        icon: 'info',
+        title: 'Galat Input',
+        text: 'IMDb movie ID (tt******) ya imdb.com ka URL dalo bhai 🙂'
+      });
+      return;
+    }
+
+    // Play
+    document.getElementById('player').src =
+      'https://vekna402las.com/play/' + id;
+  }
+</script>
+
+
+
+
+</body>
+</html>
